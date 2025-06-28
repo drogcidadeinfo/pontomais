@@ -1,0 +1,38 @@
+name: Automate Pontomais Report
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Runs every day at 5am GMT-3
+  workflow_dispatch:       # Allows manual trigger
+
+jobs:
+  run-automation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Selenium download script
+        env:
+          user: ${{ secrets.user }}
+          password: ${{ secrets.password }}
+        run: |
+          python scripts/download_report.py
+
+      - name: Run Google Sheets processing script
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          PONTOMAIS_CRED: ${{ secrets.PONTOMAIS_CRED }}
+        run: |
+          python scripts/process_and_upload.py
